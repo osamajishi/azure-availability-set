@@ -6,37 +6,37 @@ This project demonstrates how to configure high availability for compute workloa
 
 ## Architecture Overview
 
-                  +-------------------------------------------------+
-                  |              Virtual Network: VM1-vnet          |
-                  |                     (10.0.0.0/16)               |
-                  |                                                 |
-                  |  +-------------------------------------------+  |
-                  |  |             Subnet: default               |  |
-                  |  |              (10.0.0.0/24)                |  |
-                  |  |                                           |  |
-                  |  |      +-----------------------------+      |  |
-                  |  |      |   Availability Set: vmset   |      |  |
-                  |  |      |  (2 Fault / 5 Update Doms)  |      |  |
-                  |  |      |                             |      |  |
-[ Internet ]          |  |      |   +---------------------+   |      |  |
-|                |  |      |   |        VM1          |   |      |  |
-+--- [VM1-ip] ---+--+------+-->|  - Fault Domain: 0  |   |      |  |
-|    (Public)    |  | [VM1-nsg]|  - Update Domain: 0 |   |      |  |
-|                |  |  (SSH)   |  - IP: 10.0.0.4     |   |      |  |
-|                |  |      |   +---------------------+   |      |  |
-|                |  |      |                             |      |  |
-|                |  |      |   +---------------------+   |      |  |
-|                |  |      |   |        VM2          |   |      |  |
-+--- [VM2-ip] ---+--+------+-->|  - Fault Domain: 1  |   |      |  |
-(Public)    |  | [VM2-nsg]|  - Update Domain: 1 |   |      |  |
-|  |  (SSH)   |  - IP: 10.0.0.5     |   |      |  |
-|  |      |   +---------------------+   |      |  |
-|  |      +-----------------------------+      |  |
-|  +-------------------------------------------+  |
-+-------------------------------------------------+
+```mermaid
+flowchart TD
+    subgraph Internet ["🌐 Internet"]
+        User["Client Traffic"]
+    end
 
+    subgraph Azure ["Azure Cloud (Central US)"]
+        subgraph VNet ["Virtual Network: VM1-vnet (10.0.0.0/16)"]
+            subgraph Subnet ["Subnet: default (10.0.0.0/24)"]
+                subgraph AvSet ["Availability Set: vmset"]
+                    subgraph Node1 ["Fault Domain: 0 | Update Domain: 0"]
+                        VM1["VM1 (Linux Ubuntu 24.04)<br/>Private IP: 10.0.0.4<br/>NIC: vm1525"]
+                    end
+                    subgraph Node2 ["Fault Domain: 1 | Update Domain: 1"]
+                        VM2["VM2 (Linux Ubuntu 24.04)<br/>Private IP: 10.0.0.5<br/>NIC: vm2649"]
+                    end
+                end
+            end
+        end
 
----
+        IP1["VM1-ip (52.242.197.177)"]
+        IP2["VM2-ip (20.9.17.183)"]
+        NSG1["VM1-nsg (Port 22 / SSH)"]
+        NSG2["VM2-nsg (Port 22 / SSH)"]
+    end
+
+    User --> IP1
+    User --> IP2
+    IP1 --> NSG1 --> VM1
+    IP2 --> NSG2 --> VM2
+```
 
 ## Deployed Resources
 
